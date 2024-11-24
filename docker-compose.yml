@@ -1,0 +1,30 @@
+services:
+  orders-discovery-service:
+    build: ./registery-service
+    container_name: orders-discovery-service
+    ports:
+      - '8761:8761'
+    expose:
+      - '8761'
+    healthcheck:
+      test: ["CMD","curl","-f","http://localhost:8761/actuator/health"]
+      interval: 10s
+      retries: 3  # Optionally, set retry count to avoid premature failures
+      timeout: 2s
+  orders-config-server:
+    build: ./config-service
+    container_name: orders-config-server
+    ports:
+      - '8888:8888'
+    expose:
+      - '8888'
+    environment:
+      - DISCOVER-SERVER-URL= http://orders-discovery-service:8761/eureka/
+    healthcheck:
+      test: [ "CMD","curl","-f","http://localhost:8888/actuator/health" ]
+      interval: 10s
+      retries: 3
+      timeout: 2s
+    depends_on:
+      orders-discovery-service:
+        condition: service_healthy
